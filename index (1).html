@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PTCompare Pro — Physical Therapy Cost Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --em:#059669;--em-lt:#d1fae5;--em-dk:#065f46;
+  --nv:#0f2d4a;--nv-lt:#1e4976;--sky:#0ea5e9;
+  --bg:#f8fafc;--card:#ffffff;--tx:#0f172a;--mu:#64748b;
+  --bd:#e2e8f0;--sh:0 4px 24px rgba(15,45,74,.09);--shl:0 8px 40px rgba(15,45,74,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
+h1,h2,h3,.syne{font-family:'Syne',sans-serif}
+
+/* HEADER */
+#hdr{background:linear-gradient(135deg,var(--nv),var(--nv-lt));box-shadow:0 2px 20px rgba(0,0,0,.25);position:sticky;top:0;z-index:999}
+.toggle-wrap{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px;gap:2px}
+.toggle-wrap button{border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.82rem;padding:.45rem 1rem;border-radius:999px;transition:all .2s;white-space:nowrap}
+.toggle-wrap button.on{background:var(--em);color:#fff;box-shadow:0 2px 10px rgba(5,150,105,.4)}
+.toggle-wrap button:not(.on){background:transparent;color:rgba(255,255,255,.75)}
+.toggle-wrap button:not(.on):hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block}
+
+/* SEARCH HERO */
+.hero{background:linear-gradient(160deg,var(--nv-lt),#134a76);padding:2.5rem 1.5rem 1.8rem}
+.si-wrap{display:flex;gap:.5rem;max-width:700px;margin:0 auto}
+.si-wrap input{flex:1;padding:.75rem 1.2rem;border:2px solid transparent;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border .18s}
+.si-wrap input:focus{border-color:var(--em)}
+.si-wrap button,.btn-search{background:var(--em);color:#fff;border:none;padding:.75rem 1.5rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .18s,transform .12s;white-space:nowrap}
+.si-wrap button:hover,.btn-search:hover{background:var(--em-dk);transform:translateY(-1px)}
+.qchip{background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.85);padding:.28rem .75rem;border-radius:999px;font-size:.78rem;cursor:pointer;transition:background .15s}
+.qchip:hover{background:rgba(255,255,255,.22)}
+
+/* MAP */
+#map-wrap{border-radius:16px;overflow:hidden;box-shadow:var(--shl);border:2px solid var(--bd)}
+#gmap{height:400px;width:100%}
+
+/* FILTERS */
+.fpanel{background:var(--card);border-radius:14px;padding:1.3rem;box-shadow:var(--sh);border:1px solid var(--bd)}
+.flabel{font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--nv);margin-bottom:.55rem;display:block}
+.fsel{width:100%;padding:.52rem .8rem;border-radius:8px;border:1px solid var(--bd);font-family:'DM Sans',sans-serif;font-size:.85rem;background:var(--bg);cursor:pointer;outline:none;margin-bottom:.6rem;transition:border .15s}
+.fsel:focus{border-color:var(--em)}
+input[type=range]{width:100%;accent-color:var(--em);cursor:pointer;margin-bottom:.3rem}
+.rl{display:flex;justify-content:space-between;font-size:.78rem;color:var(--mu);margin-bottom:.2rem}
+.chip{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:999px;background:var(--bg);border:1.5px solid var(--bd);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .15s;margin:.18rem}
+.chip input{accent-color:var(--em);cursor:pointer}
+.chip.on{background:var(--em-lt);border-color:var(--em);color:var(--em-dk)}
+
+/* COMPLIANCE */
+#comply{background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:.85rem 1rem;display:none;align-items:flex-start;gap:.65rem;font-size:.84rem;color:#92400e;margin-top:.75rem}
+#comply.on{display:flex}
+
+/* CARDS */
+.card{background:var(--card);border-radius:16px;border:1px solid var(--bd);box-shadow:var(--sh);overflow:hidden;transition:box-shadow .2s,transform .18s}
+.card:hover{box-shadow:var(--shl);transform:translateY(-2px)}
+.badge{font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .55rem;border-radius:999px}
+.b-prem{background:var(--em-lt);color:var(--em-dk)}
+.b-uncl{background:#fee2e2;color:#991b1b}
+.b-veri{background:#dbeafe;color:#1e40af}
+.b-open{background:#d1fae5;color:#065f46}
+.b-closed{background:#fee2e2;color:#991b1b}
+.stars{color:#f59e0b}
+.mtag{font-size:.72rem;padding:.18rem .52rem;border-radius:999px;background:#f0fdf4;color:var(--em-dk);border:1px solid #a7f3d0;font-weight:500}
+.mtag.pr{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+
+/* COST BARS */
+.cbar-section{padding:.75rem 1.25rem 1rem;border-top:1px solid var(--bd);background:linear-gradient(to bottom,#f8fafc,#fff)}
+.cbar-lbl{display:flex;justify-content:space-between;font-size:.79rem;margin-bottom:.28rem;font-weight:500}
+.cbar-track{height:11px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-bottom:.55rem}
+.cbar-fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.bar-ins{background:linear-gradient(90deg,var(--sky),#38bdf8)}
+.bar-cash{background:linear-gradient(90deg,var(--em),#34d399)}
+.save-pill{display:inline-flex;align-items:center;gap:.3rem;background:var(--em);color:#fff;font-size:.76rem;font-weight:700;padding:.25rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(5,150,105,.35)}
+
+/* BUTTONS */
+.btn{background:var(--em);color:#fff;border:none;padding:.55rem 1.1rem;border-radius:9px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.83rem;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:.35rem}
+.btn:hover{background:var(--em-dk);transform:translateY(-1px);box-shadow:0 4px 14px rgba(5,150,105,.35)}
+.btn2{background:transparent;color:var(--nv);border:1.5px solid var(--bd);padding:.55rem 1rem;border-radius:9px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.83rem;cursor:pointer;transition:all .16s}
+.btn2:hover{border-color:var(--nv);background:var(--bg)}
+.btn-nm{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;padding:.55rem 1.1rem;border-radius:9px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.83rem;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:.35rem}
+.btn-nm:hover{background:rgba(255,255,255,.25)}
+
+/* LOADING */
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;gap:1rem}
+.spin{width:38px;height:38px;border:4px solid var(--bd);border-top-color:var(--em);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* B2B */
+.metric-card{background:var(--card);border-radius:14px;padding:1.3rem 1.5rem;box-shadow:var(--sh);border:1px solid var(--bd)}
+.mval{font-family:'Syne',sans-serif;font-weight:800;font-size:2.1rem;color:var(--nv);line-height:1}
+.mdelta{font-size:.78rem;font-weight:600;margin-top:.28rem;color:var(--em)}
+.pcard{background:linear-gradient(135deg,var(--nv),var(--nv-lt));border-radius:18px;color:#fff;padding:2rem;box-shadow:0 8px 40px rgba(15,45,74,.3);position:relative;overflow:hidden}
+.pcard::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(5,150,105,.4),transparent 70%);border-radius:50%}
+.ptier{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:1.1rem 1.3rem;transition:all .2s;min-width:180px}
+.ptier:hover{background:rgba(255,255,255,.14);transform:translateY(-2px)}
+.ptier.hi{border-color:var(--em);background:rgba(5,150,105,.2)}
+
+/* STATES */
+.empty-s{text-align:center;padding:3rem 1rem;color:var(--mu)}
+.err-box{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:.9rem 1.1rem;color:#991b1b;font-size:.86rem;margin-bottom:1rem}
+
+/* LIVE DOT */
+.ldot{width:8px;height:8px;background:var(--em);border-radius:50%;display:inline-block;animation:ldot 1.6s ease infinite}
+@keyframes ldot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* DRAWER (mobile filters) */
+#filter-drawer{position:fixed;top:0;left:0;width:300px;height:100%;background:var(--card);box-shadow:var(--shl);z-index:1000;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto;padding:1.5rem}
+#filter-drawer.open{transform:translateX(0)}
+#drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:none}
+#drawer-overlay.open{display:block}
+
+/* ANIM */
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.aup{animation:up .35s ease both}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .main-grid{flex-direction:column!important}
+  .sidebar{display:none!important}
+  #gmap{height:260px}
+  .mobile-filter-btn{display:flex!important}
+}
+.mobile-filter-btn{display:none;align-items:center;gap:.4rem}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.gm-style .gm-style-iw-c{border-radius:12px!important;box-shadow:0 8px 30px rgba(15,45,74,.18)!important}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="hdr">
+  <div style="max-width:1280px;margin:0 auto;padding:.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#fff;letter-spacing:-.02em">PT<span style="color:#34d399">Compare</span> Pro</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase">Physical Therapy Cost Engine</div>
+      </div>
+      <span style="background:var(--em);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:.22rem .55rem;border-radius:4px">LIVE DATA</span>
+    </div>
+    <div class="hidden md:flex" style="display:flex;align-items:center;gap:1.25rem;font-size:.75rem;color:rgba(255,255,255,.6)">
+      <span><span class="ldot" style="margin-right:.3rem"></span><b style="color:#fff">Google Places</b> Powered</span>
+      <span>|</span><span><b style="color:#34d399">Any US Zip / City</b></span>
+      <span>|</span><span><b style="color:#fff">Real</b> Ratings & Hours</span>
+    </div>
+    <div class="toggle-wrap">
+      <button id="btn-pat" class="on" onclick="sv('pat')">🔍 Patient Finder</button>
+      <button id="btn-b2b" onclick="sv('b2b')">💼 Clinic Owners ($)</button>
+    </div>
+  </div>
+</header>
+
+<!-- MOBILE FILTER DRAWER -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="filter-drawer">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--nv);font-size:1rem">Filters & Cost Calc</span>
+    <button onclick="closeDrawer()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--mu)">✕</button>
+  </div>
+  <div id="filter-drawer-content"></div>
+</div>
+
+<!-- ═══ PANEL: PATIENT ═══ -->
+<div id="panel-pat" class="panel on">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div style="text-align:center;margin-bottom:1.25rem">
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.85rem;color:#fff;letter-spacing:-.03em">Find & Compare Physical Therapy Costs</h1>
+      <p style="color:rgba(255,255,255,.65);font-size:.92rem;margin-top:.35rem">Search any US zip code or city — live Google Places data, real ratings, real costs.</p>
+    </div>
+    <div class="si-wrap">
+      <input id="loc-in" type="text" placeholder="ZIP code or city (e.g. 98105, Miami FL, Chicago)" onkeydown="if(event.key==='Enter')doSearch()"/>
+      <button onclick="doSearch()">🔍 Search</button>
+      <button class="btn-nm" onclick="nearMe()">📍 Near Me</button>
+    </div>
+    <!-- Radius -->
+    <div style="display:flex;justify-content:center;align-items:center;gap:.6rem;margin-top:.85rem;flex-wrap:wrap">
+      <span style="color:rgba(255,255,255,.6);font-size:.78rem">Search radius:</span>
+      <select id="radius-sel" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:.3rem .7rem;border-radius:8px;font-size:.8rem;cursor:pointer;outline:none">
+        <option value="8000">5 miles</option>
+        <option value="16000" selected>10 miles</option>
+        <option value="40000">25 miles</option>
+        <option value="80000">50 miles</option>
+      </select>
+    </div>
+    <!-- Quick chips -->
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;margin-top:.85rem">
+      <span style="color:rgba(255,255,255,.45);font-size:.75rem;align-self:center">Quick:</span>
+      <button class="qchip" onclick="qs('Seattle WA')">🌲 Seattle</button>
+      <button class="qchip" onclick="qs('Miami FL')">🌴 Miami</button>
+      <button class="qchip" onclick="qs('Austin TX')">🤠 Austin</button>
+      <button class="qchip" onclick="qs('New York NY')">🗽 NYC</button>
+      <button class="qchip" onclick="qs('Chicago IL')">🌆 Chicago</button>
+      <button class="qchip" onclick="qs('Los Angeles CA')">🎬 LA</button>
+      <button class="qchip" onclick="qs('Denver CO')">🏔️ Denver</button>
+      <button class="qchip" onclick="qs('Nashville TN')">🎸 Nashville</button>
+      <button class="qchip" onclick="qs('Phoenix AZ')">☀️ Phoenix</button>
+      <button class="qchip" onclick="qs('Houston TX')">🚀 Houston</button>
+      <button class="qchip" onclick="qs('Atlanta GA')">🍑 Atlanta</button>
+      <button class="qchip" onclick="qs('Portland OR')">🌹 Portland</button>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid" style="max-width:1280px;margin:0 auto;padding:1.25rem;display:flex;gap:1.25rem;align-items:flex-start">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" style="width:285px;min-width:265px;flex-shrink:0">
+      <div id="map-wrap" class="mb-4" style="margin-bottom:1rem">
+        <div id="gmap"></div>
+      </div>
+      <div class="fpanel" id="sidebar-filters">
+        <!-- filters injected by buildFiltersHTML() -->
+      </div>
+    </aside>
+
+    <!-- RESULTS -->
+    <main style="flex:1;min-width:0">
+      <!-- Toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+          <!-- Mobile filter button -->
+          <button class="mobile-filter-btn btn2" onclick="openDrawer()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filters
+          </button>
+          <span id="res-count" style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;color:var(--nv)">Search a location above</span>
+          <span id="res-loc" style="color:var(--mu);font-size:.85rem"></span>
+        </div>
+        <select id="sort-sel" style="font-size:.82rem;padding:.4rem .7rem;border-radius:8px;border:1px solid var(--bd);background:var(--card);font-family:'DM Sans',sans-serif" onchange="applyFilters()">
+          <option value="rating">Sort: Top Rated</option>
+          <option value="cash_asc">Sort: Lowest Cash Cost</option>
+          <option value="savings">Sort: Highest Savings</option>
+          <option value="reviews">Sort: Most Reviewed</option>
+        </select>
+      </div>
+
+      <div id="err-box"></div>
+      <div id="cards" style="display:flex;flex-direction:column;gap:1rem"></div>
+      <div id="loading" class="spinner-wrap" style="display:none"><div class="spin"></div><span style="color:var(--mu);font-size:.88rem">Searching Google Places...</span></div>
+      <div id="empty" class="empty-s" style="display:none">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🔍</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem">No clinics match your filters</h3>
+        <p style="font-size:.86rem;margin-top:.35rem">Try adjusting filters or expanding the search radius.</p>
+      </div>
+      <div id="welcome" style="text-align:center;padding:3.5rem 1rem;color:var(--mu)">
+        <div style="font-size:3rem;margin-bottom:.85rem">🗺️</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--nv);margin-bottom:.5rem">Search Any US Location</h3>
+        <p style="font-size:.88rem;max-width:420px;margin:0 auto;line-height:1.65">Enter a zip code or city to pull live physical therapy clinics from Google — with real ratings, hours, and side-by-side cost estimates.</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══ PANEL: B2B ═══ -->
+<div id="panel-b2b" class="panel">
+  <div style="max-width:1100px;margin:0 auto;padding:2rem 1.25rem">
+
+    <div class="pcard" style="margin-bottom:2rem">
+      <div style="position:relative;z-index:1">
+        <div style="background:var(--em);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:.22rem .55rem;border-radius:4px;display:inline-block;margin-bottom:.75rem">FOR CLINIC OWNERS</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;line-height:1.15;max-width:540px;margin-bottom:.75rem">Turn Visibility Into a <span style="color:#34d399">Predictable Revenue Stream</span></h2>
+        <p style="color:rgba(255,255,255,.7);font-size:.94rem;max-width:500px;margin-bottom:1.75rem;line-height:1.65">PTCompare Pro puts your clinic in front of high-intent patients comparing costs. Every referral click generates a tracked $15 marketplace invoice.</p>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+          <div class="ptier"><div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:.35rem">STARTER</div><div style="font-size:1.75rem;font-weight:800;font-family:'Syne',sans-serif">$49<span style="font-size:.85rem;font-weight:400;color:rgba(255,255,255,.6)">/mo</span></div><ul style="font-size:.78rem;color:rgba(255,255,255,.7);margin-top:.6rem;list-style:none;display:flex;flex-direction:column;gap:.3rem"><li>✓ Listed in patient search</li><li>✓ 3 standard modalities</li><li>✓ Basic analytics</li></ul><button class="btn mt-3" style="margin-top:.75rem;width:100%;justify-content:center;font-size:.78rem;padding:.45rem .9rem" onclick="claimFlow('Starter')">Claim Listing →</button></div>
+          <div class="ptier hi"><div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#34d399;margin-bottom:.35rem">⭐ MOST POPULAR</div><div style="font-size:1.75rem;font-weight:800;font-family:'Syne',sans-serif">$99<span style="font-size:.85rem;font-weight:400;color:rgba(255,255,255,.6)">/mo</span></div><ul style="font-size:.78rem;color:rgba(255,255,255,.7);margin-top:.6rem;list-style:none;display:flex;flex-direction:column;gap:.3rem"><li>✓ Premium modality badges</li><li>✓ Cost engine featured</li><li>✓ Priority placement</li><li>✓ Lead dashboard</li></ul><button class="btn mt-3" style="margin-top:.75rem;width:100%;justify-content:center;font-size:.78rem;padding:.45rem .9rem;background:#34d399;color:#065f46" onclick="claimFlow('Professional')">Get Started →</button></div>
+          <div class="ptier"><div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:.35rem">ENTERPRISE</div><div style="font-size:1.75rem;font-weight:800;font-family:'Syne',sans-serif">$149<span style="font-size:.85rem;font-weight:400;color:rgba(255,255,255,.6)">/mo</span></div><ul style="font-size:.78rem;color:rgba(255,255,255,.7);margin-top:.6rem;list-style:none;display:flex;flex-direction:column;gap:.3rem"><li>✓ Unlimited modalities</li><li>✓ Multi-location support</li><li>✓ White-label reports</li><li>✓ Account manager</li></ul><button class="btn mt-3" style="margin-top:.75rem;width:100%;justify-content:center;font-size:.78rem;padding:.45rem .9rem" onclick="claimFlow('Enterprise')">Contact Sales →</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--nv);margin-bottom:.9rem">📊 Marketplace Dashboard <span style="font-size:.68rem;font-weight:500;color:var(--mu);background:var(--bg);border:1px solid var(--bd);padding:.18rem .55rem;border-radius:999px;margin-left:.4rem">SIMULATED</span></h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.75rem">
+      <div class="metric-card"><div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mu);margin-bottom:.45rem">App Impressions</div><div class="mval" id="m-imp">4,832</div><div class="mdelta">▲ 18.4% this month</div></div>
+      <div class="metric-card"><div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mu);margin-bottom:.45rem">Cost Comparisons</div><div class="mval" id="m-cmp">1,207</div><div class="mdelta">▲ 11.2% this month</div></div>
+      <div class="metric-card"><div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mu);margin-bottom:.45rem">Referral Clicks</div><div class="mval" id="m-leds">83</div><div class="mdelta">▲ 7 new today</div></div>
+      <div class="metric-card"><div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mu);margin-bottom:.45rem">Marketplace Invoice</div><div class="mval" style="color:var(--em)" id="m-rev">$1,245</div><div class="mdelta">83 leads × $15 fee</div></div>
+    </div>
+
+    <!-- Live feed -->
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:1rem 1.3rem;margin-bottom:1.75rem">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:.65rem;display:flex;align-items:center;gap:.5rem"><span class="ldot"></span>Live Referral Feed</div>
+      <div id="live-feed" style="font-size:.82rem;display:flex;flex-direction:column;gap:.35rem"></div>
+    </div>
+
+    <!-- Claim form -->
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--nv);margin-bottom:.75rem">🏥 Claim Your Listing</h2>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.5rem;box-shadow:var(--sh)">
+      <p style="font-size:.88rem;color:var(--mu);margin-bottom:1.1rem">Fill out the form below and our team will verify your clinic within 24 hours.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">Your Name</label><input type="text" placeholder="Dr. Jane Smith" style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none"/></div>
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">Clinic Name</label><input type="text" placeholder="Greenwood Physical Therapy" style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none"/></div>
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">Email</label><input type="email" placeholder="you@yourclinic.com" style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none"/></div>
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">Phone</label><input type="tel" placeholder="(555) 000-0000" style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none"/></div>
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">NPI Number</label><input type="text" placeholder="1234567890" style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none"/></div>
+        <div><label style="font-size:.78rem;font-weight:600;color:var(--nv);display:block;margin-bottom:.3rem">Subscription Tier</label><select style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--bd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;background:var(--bg);outline:none"><option>Starter — $49/mo</option><option selected>Professional — $99/mo</option><option>Enterprise — $149/mo</option></select></div>
+      </div>
+      <button class="btn" style="margin-top:1rem;padding:.65rem 1.5rem" onclick="submitClaim()">Submit Claim Request →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════════
+const API_KEY = "AIzaSyA7NpSabgSxdjSwzvdIoXNn7HBya_vtzUE";
+
+// ════════════════════════════════════════════════════════════
+//  INSURANCE TABLE
+//  postMult  = insurer's negotiated rate as fraction of billed
+//  coins     = patient coinsurance % after deductible
+//  oop_def   = typical out-of-pocket max default
+// ════════════════════════════════════════════════════════════
+const INS = {
+  self:       {label:"Self-Pay / No Insurance",   postMult:1.00, coins:1.00, oop_def:99999},
+  bcbs:       {label:"Blue Cross Blue Shield",    postMult:0.82, coins:0.20, oop_def:7000},
+  aetna:      {label:"Aetna",                     postMult:0.78, coins:0.20, oop_def:7500},
+  cigna:      {label:"Cigna",                     postMult:0.75, coins:0.25, oop_def:7000},
+  uhc:        {label:"UnitedHealthcare",          postMult:0.80, coins:0.20, oop_def:8000},
+  humana:     {label:"Humana",                    postMult:0.77, coins:0.20, oop_def:7500},
+  anthem:     {label:"Anthem",                    postMult:0.79, coins:0.20, oop_def:7000},
+  kaiser:     {label:"Kaiser Permanente",         postMult:0.70, coins:0.15, oop_def:6000},
+  premera:    {label:"Premera Blue Cross",        postMult:0.81, coins:0.20, oop_def:7000},
+  regence:    {label:"Regence BlueShield",        postMult:0.80, coins:0.20, oop_def:7200},
+  oscar:      {label:"Oscar Health",              postMult:0.76, coins:0.20, oop_def:8500},
+  molina:     {label:"Molina Healthcare",         postMult:0.65, coins:0.15, oop_def:9000},
+  ambetter:   {label:"Ambetter",                  postMult:0.68, coins:0.20, oop_def:8700},
+  wellcare:   {label:"WellCare",                  postMult:0.64, coins:0.15, oop_def:9000},
+  harvard:    {label:"Harvard Pilgrim",           postMult:0.80, coins:0.20, oop_def:7000},
+  tricare:    {label:"TRICARE (Military)",        postMult:0.60, coins:0.20, oop_def:3000},
+  medicare:   {label:"Medicare",                  postMult:0.65, coins:0.20, oop_def:3000},
+  medicaid:   {label:"Medicaid / CHIP",           postMult:0.55, coins:0.05, oop_def:1000},
+  workers:    {label:"Workers' Compensation",     postMult:0.90, coins:0.00, oop_def:99999},
+  auto:       {label:"Auto Insurance (PIP)",      postMult:0.95, coins:0.00, oop_def:99999},
+};
+
+// Non-covered premium modalities → cash override
+const NON_COV = ["shockwave","cupping","bfr","astym"];
+
+// ════════════════════════════════════════════════════════════
+//  FINANCIAL CALCULATOR
+//  Accounts for: deductible spend-down, OOP max, coinsurance
+// ════════════════════════════════════════════════════════════
+function calcCosts(clinic, sessions, deduct, oopMax, insKey, selMods) {
+  const ins = INS[insKey] || INS.self;
+  const cashTotal = clinic.cashRate * sessions;
+
+  const premiumOverride = selMods.some(m => NON_COV.includes(m));
+  const isSelf = insKey === 'self';
+
+  if (premiumOverride || isSelf) {
+    return {cashTotal, insTotal: clinic.insRate * sessions,
+            savings: Math.max(0, clinic.insRate * sessions - cashTotal),
+            override: premiumOverride && !isSelf};
+  }
+
+  // Deductible then coinsurance then OOP cap
+  const negRate = clinic.insRate * ins.postMult;
+  let insTotal = 0, deductLeft = deduct, oopLeft = oopMax;
+
+  for (let s = 0; s < sessions; s++) {
+    if (oopLeft <= 0) break; // hit OOP max — rest is $0 to patient
+    let cost;
+    if (deductLeft > 0) {
+      cost = Math.min(negRate, deductLeft);
+      deductLeft -= cost;
+    } else {
+      cost = negRate * ins.coins;
+    }
+    cost = Math.min(cost, oopLeft);
+    oopLeft -= cost;
+    insTotal += cost;
+  }
+
+  return {cashTotal, insTotal: Math.round(insTotal),
+          savings: Math.max(0, Math.round(insTotal) - cashTotal), override: false};
+}
+
+// ════════════════════════════════════════════════════════════
+//  FILTER HTML BUILDER — shared between sidebar & drawer
+// ════════════════════════════════════════════════════════════
+function buildFiltersHTML() {
+  const insOptions = Object.entries(INS).map(([k,v]) =>
+    `<option value="${k}">${v.label}</option>`).join('');
+
+  return `
+<div style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--nv);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+  Refine Results
+</div>
+
+<span class="flabel">Primary Concern</span>
+<select class="fsel" id="f-concern" onchange="applyFilters()">
+  <option value="">All Conditions</option>
+  <option value="knee">Knee Rehabilitation</option>
+  <option value="back">Back / Spine Pain</option>
+  <option value="shoulder">Shoulder Injury</option>
+  <option value="hip">Hip & Pelvis</option>
+  <option value="sport">Sports Performance</option>
+  <option value="postsurg">Post-Surgical Rehab</option>
+  <option value="neuro">Neurological Rehab</option>
+  <option value="balance">Balance & Fall Prevention</option>
+  <option value="concussion">Concussion Rehab</option>
+  <option value="pelvic">Pelvic Floor</option>
+  <option value="pediatric">Pediatric PT</option>
+  <option value="hand">Hand / Wrist Therapy</option>
+  <option value="plantar">Plantar Fasciitis</option>
+</select>
+
+<span class="flabel">Minimum Rating</span>
+<select class="fsel" id="f-rating" onchange="applyFilters()">
+  <option value="0">Any Rating</option>
+  <option value="4.0">⭐ 4.0+ Stars</option>
+  <option value="4.5">⭐ 4.5+ Stars</option>
+</select>
+
+<span class="flabel" style="margin-top:.5rem">Premium Modalities</span>
+<div id="mod-chips" style="margin-bottom:.5rem">
+  ${[
+    ['shockwave','Shockwave Therapy'],['dryneedling','Dry Needling'],
+    ['cupping','Myofascial Cupping'],['deeptissue','Deep Tissue Massage'],
+    ['aquatic','Aquatic Therapy'],['bfr','Blood Flow Restriction (BFR)'],
+    ['astym','ASTYM / Graston'],['kinesio','Kinesio Taping'],
+    ['vestibular','Vestibular Therapy'],['lymphedema','Lymphedema Treatment'],
+  ].map(([v,l]) => `<label class="chip" id="chip-${v}"><input type="checkbox" value="${v}" onchange="applyFilters()"/> ${l}</label>`).join('')}
+</div>
+
+<hr style="margin:.9rem 0;border-color:var(--bd)"/>
+<div style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--nv);margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  Cost Calculator
+</div>
+
+<span class="flabel">Insurance Provider</span>
+<select class="fsel" id="f-ins" onchange="applyFilters()">${insOptions}</select>
+
+<span class="flabel">Network</span>
+<select class="fsel" id="f-net" onchange="applyFilters()">
+  <option value="in">In-Network</option>
+  <option value="out">Out-of-Network (×1.5 rates)</option>
+</select>
+
+<span class="flabel">Remaining Deductible</span>
+<div class="rl"><span>$0</span><span id="dv" style="font-weight:600;color:var(--nv)">$1,500</span><span>$3,000</span></div>
+<input type="range" id="s-ded" min="0" max="3000" step="100" value="1500" oninput="document.getElementById('dv').textContent='$'+this.value;applyFilters()"/>
+
+<span class="flabel">Out-of-Pocket Maximum</span>
+<div class="rl"><span>$0</span><span id="ov" style="font-weight:600;color:var(--nv)">$7,000</span><span>$10,000</span></div>
+<input type="range" id="s-oop" min="0" max="10000" step="500" value="7000" oninput="document.getElementById('ov').textContent='$'+this.value;applyFilters()"/>
+
+<span class="flabel">Treatment Horizon (Sessions)</span>
+<div class="rl"><span>1</span><span id="sv" style="font-weight:600;color:var(--nv)">12 sessions</span><span>24</span></div>
+<input type="range" id="s-sess" min="1" max="24" step="1" value="12" oninput="document.getElementById('sv').textContent=this.value+' sessions';applyFilters()"/>
+
+<div id="comply" class="on" style="display:none">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" style="flex-shrink:0;margin-top:.1rem"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  <span>⚠️ <b>Coverage Override:</b> Selected modality typically not covered by insurance. Cash rates shown.</span>
+</div>
+
+<button class="btn" style="width:100%;justify-content:center;margin-top:.9rem" onclick="applyFilters()">↻ Recalculate</button>
+`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  GOOGLE MAPS
+// ════════════════════════════════════════════════════════════
+let gmap, infoWin, markers = [], clinics = [], leadsN = 83, revN = 1245;
+
+function initMap() {
+  gmap = new google.maps.Map(document.getElementById('gmap'), {
+    center:{lat:39.5,lng:-98.35}, zoom:4,
+    mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
+    styles:[
+      {featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]},
+      {featureType:"transit",stylers:[{visibility:"off"}]},
+    ]
+  });
+  infoWin = new google.maps.InfoWindow();
+
+  // Build filter HTML into sidebar and drawer
+  document.getElementById('sidebar-filters').innerHTML = buildFiltersHTML();
+  document.getElementById('filter-drawer-content').innerHTML = buildFiltersHTML();
+}
+
+function loadMaps() {
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
+  s.async = true; s.defer = true;
+  s.onerror = () => showErr("Failed to load Google Maps. Check your API key is active and Places API is enabled.");
+  document.head.appendChild(s);
+}
+
+// ─── Search flow ──────────────────────────────────────────
+function geocodeSearch(q) {
+  if (!window.google) {showErr("Maps still loading — try again in a moment."); return;}
+  setLoading(true);
+  const gc = new google.maps.Geocoder();
+  gc.geocode({address: q+' USA', componentRestrictions:{country:'US'}}, (res,st) => {
+    if (st==='OK' && res[0]) {
+      const loc = res[0].geometry.location;
+      searchNear(loc.lat(), loc.lng(), res[0].formatted_address);
+    } else {
+      setLoading(false);
+      showErr(`Could not find "${q}". Try a more specific zip code or city.`);
+    }
+  });
+}
+
+function searchNear(lat, lng, label) {
+  setLoading(true); clearMarkers(); clinics = [];
+  document.getElementById('res-loc').textContent = label ? `— ${label}` : '';
+  const radius = parseInt(document.getElementById('radius-sel').value) || 16000;
+
+  const svc = new google.maps.places.PlacesService(gmap);
+
+  // We do TWO searches with different keywords to maximize results
+  let allResults = [], pending = 2;
+
+  function handleResults(results, status) {
+    if (status === google.maps.places.PlacesServiceStatus.OK) {
+      allResults = allResults.concat(results);
+    }
+    pending--;
+    if (pending === 0) processResults(allResults, lat, lng, label);
+  }
+
+  svc.nearbySearch({location:new google.maps.LatLng(lat,lng), radius, keyword:'physical therapy'}, handleResults);
+  svc.nearbySearch({location:new google.maps.LatLng(lat,lng), radius, keyword:'physiotherapy rehabilitation clinic'}, handleResults);
+}
+
+function processResults(raw, lat, lng, label) {
+  setLoading(false);
+  if (!raw.length) {showEmpty(); return;}
+
+  // Deduplicate by place_id
+  const seen = new Set();
+  const unique = raw.filter(r => { if (seen.has(r.place_id)) return false; seen.add(r.place_id); return true; });
+
+  // Convert to our data model
+  clinics = unique.slice(0,40).map((p,i) => {
+    const clat = p.geometry.location.lat(), clng = p.geometry.location.lng();
+    const cash = estimateCash(p.price_level, clat, clng);
+    return {
+      id: i+1, placeId: p.place_id, name: p.name,
+      address: p.vicinity || '',
+      lat: clat, lng: clng,
+      rating: p.rating||0, reviews: p.user_ratings_total||0,
+      open: p.opening_hours ? p.opening_hours.open_now : null,
+      cashRate: cash, insRate: Math.round(cash*1.5),
+      modalities: randMods(), concerns: randConcerns(),
+      tier: randTier(),
+    };
+  });
+
+  gmap.panTo({lat,lng}); gmap.setZoom(13);
+  placeMarkers(clinics);
+  renderAllCards();
+  document.getElementById('welcome').style.display='none';
+}
+
+// ─── Rate estimation ──────────────────────────────────────
+function estimateCash(priceLevel, lat, lng) {
+  const base = [65,80,100,130,165][priceLevel||2]||95;
+  let m = 1.0;
+  if (lat>40.5&&lat<41.0&&lng>-74.3&&lng<-73.7) m=1.45;       // NYC
+  else if (lat>37.2&&lat<37.9&&lng>-122.6&&lng<-121.8) m=1.40; // SF
+  else if (lat>33.7&&lat<34.4&&lng>-118.7&&lng<-117.9) m=1.30; // LA
+  else if (lat>47.4&&lat<47.9&&lng>-122.6&&lng<-122.1) m=1.20; // Seattle
+  else if (lat>42.2&&lat<42.5&&lng>-71.3&&lng<-70.9) m=1.25;   // Boston
+  else if (lat>41.6&&lat<42.1&&lng>-88.0&&lng<-87.5) m=1.15;   // Chicago
+  else if (lat>25.5&&lat<26.0&&lng>-80.5&&lng<-80.1) m=1.18;   // Miami
+  else if (lat>29.6&&lat<30.1&&lng>-97.9&&lng<-97.4) m=1.05;   // Austin
+  else if (lat<34.0) m=0.88;                                     // South/rural
+  return Math.round(base*m);
+}
+
+// ─── Random attributes (stand-in for verified profile data) ──
+const ALL_MODS = ['shockwave','dryneedling','cupping','deeptissue','aquatic','bfr','astym','kinesio','vestibular','lymphedema'];
+const ALL_CONC = ['knee','back','shoulder','hip','sport','postsurg','neuro','balance','concussion','pelvic','pediatric','hand','plantar'];
+function randMods() { return shuffle(ALL_MODS).slice(0, Math.floor(Math.random()*4)+1); }
+function randConcerns() { return shuffle(ALL_CONC).slice(0, Math.floor(Math.random()*5)+2); }
+function randTier() { const r=Math.random(); return r<.12?'enterprise':r<.30?'pro':r<.48?'starter':null; }
+function shuffle(a) { return [...a].sort(()=>Math.random()-.5); }
+
+// ─── Map markers ─────────────────────────────────────────
+function placeMarkers(list) {
+  clearMarkers();
+  list.forEach(c => {
+    const isPrem = c.tier==='enterprise'||c.tier==='pro';
+    const mk = new google.maps.Marker({
+      position:{lat:c.lat,lng:c.lng}, map:gmap, title:c.name,
+      animation: google.maps.Animation.DROP,
+      icon:{
+        path: google.maps.SymbolPath.CIRCLE,
+        scale:10,
+        fillColor: isPrem?'#059669':'#0f2d4a',
+        fillOpacity:1, strokeColor:'#fff', strokeWeight:2.5
+      }
+    });
+    mk.addListener('click', () => {
+      infoWin.setContent(`
+        <div style="font-family:'DM Sans',sans-serif;max-width:230px;padding:4px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:#0f2d4a;font-size:.95rem">${c.name}</div>
+          ${c.rating?`<div style="color:#f59e0b;font-size:.82rem;margin:.25rem 0">★ ${c.rating} <span style="color:#64748b">(${c.reviews.toLocaleString()} reviews)</span></div>`:''}
+          <div style="font-size:.78rem;color:#64748b;margin-bottom:.45rem">${c.address}</div>
+          ${c.open===true?'<span style="background:#d1fae5;color:#065f46;font-size:.68rem;font-weight:700;padding:.15rem .45rem;border-radius:999px">● Open Now</span>':c.open===false?'<span style="background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:700;padding:.15rem .45rem;border-radius:999px">Closed Now</span>':''}
+          <div style="font-size:.78rem;margin-top:.45rem"><b>Est. Cash:</b> $${c.cashRate}/session</div>
+          <div style="margin-top:.5rem"><span style="color:#059669;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:underline" onclick="scrollToCard(${c.id})">View cost comparison ↓</span></div>
+        </div>
+      `);
+      infoWin.open(gmap, mk);
+    });
+    markers.push(mk);
+  });
+}
+function clearMarkers() { markers.forEach(m=>m.setMap(null)); markers=[]; }
+function scrollToCard(id) {
+  infoWin.close();
+  const el = document.getElementById('card-'+id);
+  if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #059669'; el.style.outlineOffset='3px'; setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},1800); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER CARDS
+// ════════════════════════════════════════════════════════════
+const MOD_LBL = {shockwave:'Shockwave',dryneedling:'Dry Needling',cupping:'Cupping',deeptissue:'Deep Tissue',aquatic:'Aquatic',bfr:'BFR',astym:'ASTYM/Graston',kinesio:'Kinesio Tape',vestibular:'Vestibular',lymphedema:'Lymphedema'};
+const NON_COV_SET = new Set(NON_COV);
+
+function stars(r) {
+  if (!r) return '☆☆☆☆☆';
+  const f=Math.floor(r), h=r-f>=.5;
+  return Array.from({length:5},(_,i)=>i<f?'★':i===f&&h?'⯨':'☆').join('');
+}
+
+function tierBadge(t) {
+  if (!t) return `<span class="badge b-uncl">Unclaimed</span>`;
+  if (t==='enterprise') return `<span class="badge b-prem">⭐ Enterprise</span>`;
+  if (t==='pro') return `<span class="badge b-prem">✓ Pro Partner</span>`;
+  return `<span class="badge b-veri">Listed</span>`;
+}
+
+function cardHTML(c, cost) {
+  const mx = Math.max(cost.insTotal, cost.cashTotal, 1);
+  const ip = Math.round(cost.insTotal/mx*100);
+  const cp = Math.round(cost.cashTotal/mx*100);
+
+  return `<div class="card aup" id="card-${c.id}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.25rem 1.25rem .75rem">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin-bottom:.35rem">
+          ${tierBadge(c.tier)}
+          ${c.open===true?'<span class="badge b-open">● Open</span>':c.open===false?'<span class="badge b-closed">Closed</span>':''}
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--nv);margin-bottom:.15rem">${c.name}</h3>
+        <div style="font-size:.8rem;color:var(--mu)">📍 ${c.address}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        ${c.rating?`<div class="stars" style="font-size:.85rem">${stars(c.rating)} <b style="color:var(--nv)">${c.rating}</b></div><div style="color:var(--mu);font-size:.78rem">${c.reviews.toLocaleString()} reviews</div>`:'<div style="color:var(--mu);font-size:.78rem">No reviews</div>'}
+      </div>
+    </div>
+    <div style="padding:.2rem 1.25rem .85rem">
+      <div style="display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.4rem">
+        ${c.modalities.map(m=>`<span class="mtag${NON_COV_SET.has(m)?' pr':''}">${MOD_LBL[m]||m}</span>`).join('')}
+      </div>
+      <div style="font-size:.76rem;color:var(--mu)"><b style="color:var(--nv)">Est. per session:</b> Cash $${c.cashRate} · Billed ~$${c.insRate} <span style="color:#94a3b8">(Google estimate)</span></div>
+    </div>
+    <div class="cbar-section">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--nv);margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.35rem">
+        <span>💰 Full Plan-of-Care Cost</span>
+        ${cost.savings>0?`<span class="save-pill">💚 Save $${cost.savings.toLocaleString()} cash</span>`:''}
+      </div>
+      <div class="cbar-lbl"><span>🛡️ Insurance (est. patient cost)</span><span style="font-weight:700;color:var(--nv)">$${cost.insTotal.toLocaleString()}</span></div>
+      <div class="cbar-track"><div class="cbar-fill bar-ins" style="width:${ip}%"></div></div>
+      <div class="cbar-lbl"><span>💵 Flat Cash Package</span><span style="font-weight:700;color:var(--em-dk)">$${cost.cashTotal.toLocaleString()}</span></div>
+      <div class="cbar-track"><div class="cbar-fill bar-cash" style="width:${cp}%"></div></div>
+      ${cost.override?`<div style="font-size:.76rem;color:#92400e;background:#fffbeb;border:1px solid #f59e0b;border-radius:7px;padding:.45rem .7rem;margin-top:.45rem">⚠️ Premium modality — insurance override applied. Cash rates shown.</div>`:''}
+      <div style="display:flex;gap:.45rem;margin-top:.9rem;flex-wrap:wrap">
+        <button class="btn" onclick="reqAppt(${c.id},'${c.name.replace(/'/g,"\\'")}')">📅 Request Appt</button>
+        <button class="btn2" onclick="openGM('${c.placeId}','${c.name.replace(/'/g,"\\'")}')">🗺️ Google Maps</button>
+        ${!c.tier?`<button class="btn2" onclick="unclaimedCTA(${c.id},'${c.name.replace(/'/g,"\\'")}')">🏷️ Claim Listing</button>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  FILTER ENGINE
+// ════════════════════════════════════════════════════════════
+function getFVals() {
+  // Read from whichever set of filter elements exists (sidebar or drawer)
+  function gv(id) { return (document.getElementById(id)||{}).value||''; }
+  function gn(id) { return parseFloat(gv(id))||0; }
+  const mods = Array.from(document.querySelectorAll('#mod-chips input:checked')).map(el=>el.value);
+  return {
+    concern: gv('f-concern'), rating: gn('f-rating'),
+    mods, ins: gv('f-ins')||'self', net: gv('f-net')||'in',
+    ded: gn('s-ded'), oop: gn('s-oop')||7000, sess: gn('s-sess')||12,
+  };
+}
+
+function applyFilters() {
+  if (!clinics.length) return;
+  const f = getFVals();
+
+  // Compliance notice
+  const premOvr = f.mods.some(m=>NON_COV.includes(m)) && f.ins!=='self';
+  document.querySelectorAll('#comply').forEach(el=>el.style.display=premOvr?'flex':'none');
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.classList.toggle('on', chip.querySelector('input')?.checked||false);
+  });
+
+  // Out-of-network multiplier
+  const netMult = f.net==='out' ? 1.5 : 1.0;
+
+  let list = clinics.filter(c => {
+    if (f.rating && c.rating < f.rating) return false;
+    if (f.concern && !c.concerns.includes(f.concern)) return false;
+    if (f.mods.length && !f.mods.every(m=>c.modalities.includes(m))) return false;
+    return true;
+  });
+
+  // Sort
+  const sort = (document.getElementById('sort-sel')||{}).value||'rating';
+  if (sort==='cash_asc') list.sort((a,b)=>a.cashRate-b.cashRate);
+  else if (sort==='reviews') list.sort((a,b)=>b.reviews-a.reviews);
+  else if (sort==='savings') {
+    list.sort((a,b) => {
+      const ca = calcCosts({...a,insRate:Math.round(a.insRate*netMult)}, f.sess,f.ded,f.oop,f.ins,f.mods).savings;
+      const cb = calcCosts({...b,insRate:Math.round(b.insRate*netMult)}, f.sess,f.ded,f.oop,f.ins,f.mods).savings;
+      return cb-ca;
+    });
+  }
+  else list.sort((a,b)=>(b.rating||0)-(a.rating||0));
+
+  renderCards(list, f, netMult);
+}
+
+function renderAllCards() { applyFilters(); }
+
+function renderCards(list, f, netMult=1) {
+  const box = document.getElementById('cards');
+  const emp = document.getElementById('empty');
+  document.getElementById('welcome').style.display='none';
+
+  if (!list.length) { box.innerHTML=''; emp.style.display='block'; document.getElementById('res-count').textContent='No results match filters'; return; }
+  emp.style.display='none';
+  document.getElementById('res-count').textContent=`Showing ${list.length} clinic${list.length>1?'s':''}`;
+  box.innerHTML = list.map(c => {
+    const adjC = {...c, insRate: Math.round(c.insRate*netMult)};
+    return cardHTML(c, calcCosts(adjC, f.sess, f.ded, f.oop, f.ins, f.mods));
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  SEARCH ENTRY POINTS
+// ════════════════════════════════════════════════════════════
+function doSearch() {
+  const q = document.getElementById('loc-in').value.trim();
+  if (!q) return; clearErr(); geocodeSearch(q);
+}
+function qs(q) { document.getElementById('loc-in').value=q; doSearch(); }
+function nearMe() {
+  if (!navigator.geolocation) { showErr("Geolocation not supported by your browser."); return; }
+  setLoading(true);
+  navigator.geolocation.getCurrentPosition(
+    pos => searchNear(pos.coords.latitude, pos.coords.longitude, "Your Location"),
+    () => { setLoading(false); showErr("Could not get your location. Please allow location access and try again."); }
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+//  UI STATE
+// ════════════════════════════════════════════════════════════
+function setLoading(on) {
+  document.getElementById('loading').style.display = on?'flex':'none';
+  document.getElementById('cards').style.display   = on?'none':'flex';
+  if (on) { document.getElementById('empty').style.display='none'; document.getElementById('welcome').style.display='none'; }
+}
+function showEmpty() { document.getElementById('empty').style.display='block'; document.getElementById('res-count').textContent='No results found'; setLoading(false); }
+function showErr(msg) { document.getElementById('err-box').innerHTML=`<div class="err-box">⚠️ ${msg}</div>`; setLoading(false); }
+function clearErr() { document.getElementById('err-box').innerHTML=''; }
+
+function openDrawer()  { document.getElementById('filter-drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('filter-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+
+// ════════════════════════════════════════════════════════════
+//  ACTIONS / MONETIZATION
+// ════════════════════════════════════════════════════════════
+function reqAppt(id, name) {
+  const c = clinics.find(x=>x.id===id);
+  const msg = c&&c.tier
+    ? `This clinic is a ${c.tier.toUpperCase()} partner. A $15 referral fee is invoiced to their account.`
+    : `UNCLAIMED profile — lead captured for free. A subscribed clinic would see this in their dashboard within 60 seconds.`;
+  alert(`📅 Appointment Request — ${name}\n\nMARKETPLACE EVENT LOGGED\n• Trigger: "Request Appt" button\n• Clinic: ${name}\n\n${msg}\n\nIn production, patient is redirected to the clinic's booking system.`);
+  leadsN++; revN+=15;
+  const le=document.getElementById('m-leds'), re=document.getElementById('m-rev');
+  if(le) le.textContent=leadsN.toLocaleString();
+  if(re) re.textContent='$'+revN.toLocaleString();
+}
+function openGM(placeId, name) {
+  window.open(placeId ? `https://www.google.com/maps/place/?q=place_id:${placeId}` : `https://www.google.com/maps/search/${encodeURIComponent(name)}`, '_blank');
+}
+function unclaimedCTA(id, name) { sv('b2b'); setTimeout(()=>alert(`🏷️ Claim "${name}"\n\nRedirected to Clinic Owner Portal.\n\nClaiming unlocks:\n✅ Priority search placement\n✅ Premium modality badges\n✅ Lead tracking dashboard\n✅ Monthly invoice reports\n\nStarting at $49/month.`),300); }
+function claimFlow(tier) { alert(`🎉 Starting ${tier} Onboarding\n\n1. Business verification (NPI + state license)\n2. Stripe billing setup ($49–$149/mo)\n3. Profile photo & description upload\n4. Cash-pay modality selection\n5. Go-live within 24 hours\n\nEstimated setup time: 8 minutes.`); }
+function submitClaim() { alert("✅ Claim request submitted!\n\nOur team will verify your NPI number and contact you within 24 hours to complete setup.\n\nThank you for joining PTCompare Pro!"); }
+
+// ════════════════════════════════════════════════════════════
+//  VIEW SWITCHER
+// ════════════════════════════════════════════════════════════
+function sv(view) {
+  document.getElementById('panel-pat').classList.toggle('on', view==='pat');
+  document.getElementById('panel-b2b').classList.toggle('on', view==='b2b');
+  document.getElementById('btn-pat').classList.toggle('on', view==='pat');
+  document.getElementById('btn-b2b').classList.toggle('on', view==='b2b');
+  if (view==='b2b') populateFeed();
+}
+
+// ════════════════════════════════════════════════════════════
+//  B2B LIVE FEED
+// ════════════════════════════════════════════════════════════
+const FEED = [
+  "Patient compared 12-session Knee Rehab costs — Seattle WA",
+  "Patient requested Diagnostic Appt — Miami clinic",
+  "Patient compared Shockwave Therapy (3 clinics) — Austin TX",
+  "Patient viewed cash vs. BCBS comparison — New York NY",
+  "Patient used Near Me search — Chicago IL",
+  "Patient clicked Request Appt — Los Angeles clinic",
+  "Patient compared cupping packages — Denver CO",
+  "Patient compared 18 sessions for Back Pain — Nashville TN",
+  "Patient filtered by Dry Needling — Phoenix AZ",
+  "Patient compared Out-of-Network rates — Houston TX",
+];
+function populateFeed() {
+  const el=document.getElementById('live-feed');
+  if (!el) return;
+  el.innerHTML=shuffle(FEED).slice(0,5).map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:.55rem;padding:.28rem 0;border-bottom:1px solid var(--bd)">
+      <span style="color:var(--em);font-weight:700;font-size:.78rem;white-space:nowrap">${(i*3)+1}m ago</span>
+      <span style="font-size:.82rem">${t}</span>
+      <span style="margin-left:auto;background:var(--em-lt);color:var(--em-dk);font-size:.72rem;font-weight:700;padding:.13rem .48rem;border-radius:999px;white-space:nowrap">+$15</span>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadMaps();
+  setInterval(()=>{ if(document.getElementById('panel-b2b').classList.contains('on')) populateFeed(); }, 8000);
+});
+</script>
+</body>
+</html>
